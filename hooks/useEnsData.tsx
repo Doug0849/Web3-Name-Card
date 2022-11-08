@@ -17,7 +17,7 @@ const useEnsData = (_addrss?: string, _ensName?: string) => {
     if (_ensName || addr) {
       setEnsData(_ensName || data);
     }
-  }, [_ensName, data]);
+  }, [_ensName, addr]);
 
   async function setEnsData(ensName: string) {
     // 若有_ensName就可以帶入setEnsData來宣告變數resolver = provider.getResolver(ensName)，若確定可以取得解析器，則可以再透過解析器取得ENS資料。

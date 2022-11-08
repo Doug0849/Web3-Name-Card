@@ -1,28 +1,61 @@
+import {
+  Box,
+  Container,
+  Flex,
+  Stack,
+  VStack,
+  Text,
+  Button,
+  HStack,
+  Spinner,
+  Link,
+  Input,
+} from "@chakra-ui/react";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import type { NextPage } from "next";
 import Head from "next/head";
-import { useEffect, useState } from "react";
-import { useConnect } from "wagmi";
+import { SetStateAction, useEffect, useState } from "react";
+import { useAccount, useConnect, useEnsName } from "wagmi";
 import Card from "../components/Card";
 import useEnsData from "../hooks/useEnsData";
 import styles from "../styles/Home.module.css";
 import { ensDataType } from "../types/ensType";
+import useNFT from "../hooks/useNFT";
+import NFTCard from "../components/NftCard";
 
 const Home: NextPage = () => {
   const [domainName, setDomainName] = useState("");
-  const [finalDomainName, setFinalDomainName] = useState(domainName);
+  const [finalDomainName, setFinalDomainName] = useState(undefined);
   const [currentAddr, setCurrentAddr] = useState(undefined);
-  const [isConnect, setIsConnect] = useState(false);
   const ensData: ensDataType = useEnsData(currentAddr, finalDomainName);
-  const { connect, connectors, error, isLoading, pendingConnector, isSuccess } =
-    useConnect();
+  const nftData = useNFT();
+  const { address, isConnecting, isDisconnected } = useAccount();
+  const { data, isError } = useEnsName({
+    address: address,
+    onError(error) {
+      console.log("Error", error);
+    },
+  });
+  const [isFetching, setIsFetching] = useState(false);
+
+  const setQuery = () => {
+    setFinalDomainName(domainName);
+  };
 
   useEffect(() => {
-    if (isSuccess) {
-      setCurrentAddr("0x08C5E50244FC58bc15Bf07BDAbb67453e624CB17");
-      setFinalDomainName("edhal.ens");
+    setIsFetching(!(ensData.ensName == finalDomainName));
+  }, [ensData, finalDomainName]);
+
+  useEffect(() => {
+    if (address) {
+      setCurrentAddr(address);
+      setFinalDomainName(data);
+      console.log(address);
+    } else {
+      setCurrentAddr(undefined);
+      setFinalDomainName(undefined);
     }
-  }, [isSuccess]);
+  }, []);
 
   return (
     <div className={styles.container}>
@@ -36,8 +69,101 @@ const Home: NextPage = () => {
       </Head>
 
       <main className={styles.main}>
-        <ConnectButton />
-        <Card cardData={ensData} cardBgColor={"#cdcdcd"} colors={[]}></Card>
+        <Container maxW="90%">
+          <Flex>
+            <Stack w="100%">
+              <Box mt="100">
+                <Text fontSize="3xl" style={{ fontWeight: "bold" }} mb="10px">
+                  The ENS Business Card
+                </Text>
+                <HStack mb="10px">
+                  <ConnectButton />
+                </HStack>
+                <Input
+                  placeholder="Enter your ens domain name or your Ethereum address"
+                  size="sm"
+                  w="100%"
+                  mb="10px"
+                  value={domainName}
+                  onChange={(e: {
+                    target: { value: SetStateAction<string> };
+                  }) => {
+                    if (e.target.value.toString().startsWith("0x")) {
+                      setDomainName(e.target.value);
+                      setCurrentAddr(e.target.value);
+                    } else {
+                      setDomainName(e.target.value);
+                    }
+                  }}
+                />
+                <HStack mb="10px">
+                  <Text>Example: </Text>
+                  <Link
+                    onClick={() => {
+                      setDomainName("edhal.eth");
+                      setFinalDomainName("edhal.eth");
+                    }}
+                  >
+                    edhal.eth
+                  </Link>
+                  <Link
+                    onClick={() => {
+                      setDomainName("cheyuwu.eth");
+                      setFinalDomainName("cheyuwu.eth");
+                    }}
+                  >
+                    cheyuwu.eth
+                  </Link>
+                  <Link
+                    onClick={() => {
+                      setDomainName("tinaaaaalee.eth");
+                      setFinalDomainName("tinaaaaalee.eth");
+                    }}
+                  >
+                    tinaaaaalee.eth
+                  </Link>
+                </HStack>
+                <Button
+                  w="100%"
+                  mb="20px"
+                  backgroundColor="#cdcdcd"
+                  onClick={setQuery}
+                >
+                  {" "}
+                  Fetch
+                  {isFetching && <Spinner ml={3} size="sm" color="white" />}
+                </Button>
+              </Box>
+              <Box>
+                <NFTCard ethAddress={ensData.ethAddress || ""}></NFTCard>
+                <VStack>useNFTs</VStack>
+              </Box>
+            </Stack>
+            <Box mt="5">
+              {/* <HStack mb={4}>
+              {imgColor &&
+                sortColors(imgColor).map((data, dataId) => (
+                  <Box
+                    key={dataId}
+                    w={50}
+                    h={50}
+                    shadow="xl"
+                    backgroundColor={convertColor(data)}
+                  ></Box>
+                ))}
+            </HStack> */}
+              {/* <pre style={{ width: "500px", whiteSpace: "pre-line" }}>
+              {JSON.stringify(imgColor, null, 4)}
+            </pre> */}
+              {/* <pre style={{ width: "500px", whiteSpace: "pre-line" }}>
+              {JSON.stringify(ensData, null, 4)}
+            </pre> */}
+              {/* <pre>{JSON.stringify(imgColor, null, 4)}</pre> */}
+              {/* <pre>{JSON.stringify(nft, null, 4)}</pre> */}
+            </Box>
+            <Card cardData={ensData} cardBgColor={"#cdcdcd"} colors={[]}></Card>
+          </Flex>
+        </Container>
       </main>
     </div>
   );

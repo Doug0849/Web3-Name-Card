@@ -13,6 +13,7 @@
     "@emotion/react": "^11.10.5",
     "@emotion/styled": "^11.10.5",
     "@rainbow-me/rainbowkit": "^0.7.4",
+    "alchemy-sdk": "^2.2.0",
     "animate.css": "^4.1.1",
     "animate.css-react": "^1.1.0",
     "classnames": "^2.3.2",
