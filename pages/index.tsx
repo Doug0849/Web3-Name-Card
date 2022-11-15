@@ -10,6 +10,7 @@ import {
   Spinner,
   Link,
   Input,
+  Center,
 } from "@chakra-ui/react";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import type { NextPage } from "next";
@@ -21,14 +22,15 @@ import useEnsData from "../hooks/useEnsData";
 import styles from "../styles/Home.module.css";
 import { ensDataType } from "../types/ensType";
 import useNFT from "../hooks/useNFT";
-import NFTCard from "../components/NftCard";
+import NFTCard from "../components/NFTCard";
+import { colorRawType } from "../types/colorRawType";
+import useImgColor from "../hooks/useImgColor";
 
 const Home: NextPage = () => {
   const [domainName, setDomainName] = useState("");
   const [finalDomainName, setFinalDomainName] = useState(undefined);
   const [currentAddr, setCurrentAddr] = useState(undefined);
   const ensData: ensDataType = useEnsData(currentAddr, finalDomainName);
-  const nftData = useNFT();
   const { address, isConnecting, isDisconnected } = useAccount();
   const { data, isError } = useEnsName({
     address: address,
@@ -36,29 +38,63 @@ const Home: NextPage = () => {
       console.log("Error", error);
     },
   });
+
+  const imgColor: Array<colorRawType> = useImgColor(ensData.avatarUrl || "");
+  const [sortedColors, setSortedColors] = useState<Array<colorRawType>>([]);
+
   const [isFetching, setIsFetching] = useState(false);
+
+  useEffect(() => {
+    setIsFetching(!(ensData.ensName == finalDomainName));
+  }, [ensData, finalDomainName]);
 
   const setQuery = () => {
     setFinalDomainName(domainName);
   };
 
   useEffect(() => {
-    setIsFetching(!(ensData.ensName == finalDomainName));
-  }, [ensData, finalDomainName]);
-
-  useEffect(() => {
     if (address) {
       setCurrentAddr(address);
       setFinalDomainName(data);
-      console.log(address);
     } else {
       setCurrentAddr(undefined);
       setFinalDomainName(undefined);
     }
   }, []);
 
+  useEffect(() => {
+    setSortedColors(sortColors(imgColor));
+  }, [imgColor]);
+
+  const convertColor = (clr: colorRawType | undefined) => {
+    if (clr) {
+      return `rgb(${clr._rgb[0]},${clr._rgb[1]},${clr._rgb[2]})`;
+    } else {
+      return "";
+    }
+  };
+
+  const getBrightness = (clr: colorRawType) => {
+    if (clr) {
+      return clr._rgb[0] * 0.299 + clr._rgb[1] * 0.587 + clr._rgb[2] * 0.114;
+    } else {
+      return 0;
+    }
+  };
+
+  const sortColors = (colors: Array<colorRawType>) => {
+    if (!colors) return [];
+    let clrs = colors
+      .map((clr) => ({ clr, brightness: getBrightness(clr) }))
+      .sort((a, b) => {
+        return a.brightness - b.brightness;
+      })
+      .map(({ clr }) => clr);
+    return clrs;
+  };
+
   return (
-    <div className={styles.container}>
+    <>
       <Head>
         <title>RainbowKit App</title>
         <meta
@@ -68,7 +104,12 @@ const Home: NextPage = () => {
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
-      <main className={styles.main}>
+      <Center
+        w="100%"
+        height="100vh"
+        backgroundColor={convertColor(sortedColors[4]) || "gray.100"}
+        transitionDuration="1s"
+      >
         <Container maxW="90%">
           <Flex>
             <Stack w="100%">
@@ -161,11 +202,15 @@ const Home: NextPage = () => {
               {/* <pre>{JSON.stringify(imgColor, null, 4)}</pre> */}
               {/* <pre>{JSON.stringify(nft, null, 4)}</pre> */}
             </Box>
-            <Card cardData={ensData} cardBgColor={"#cdcdcd"} colors={[]}></Card>
+            <Card
+              cardData={ensData}
+              colors={sortedColors}
+              cardBgColor={convertColor(imgColor && imgColor[1])}
+            ></Card>
           </Flex>
         </Container>
-      </main>
-    </div>
+      </Center>
+    </>
   );
 };
 
