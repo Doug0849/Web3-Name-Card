@@ -20,7 +20,6 @@ const useNFT = (_address?: string) => {
     )
       .then((response) => response.json())
       .then(({ assets }) => {
-        console.log(assets);
         setNfts(assets);
       })
       .catch((err) => {

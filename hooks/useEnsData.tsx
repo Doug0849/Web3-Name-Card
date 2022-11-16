@@ -2,10 +2,9 @@ import { useEffect, useState } from "react";
 import { useProvider, useAccount, useEnsName } from "wagmi";
 
 const useEnsData = (_addrss?: string, _ensName?: string) => {
-  const { address } = useAccount();
-  const addr = _addrss || address;
+  const addr: any = _addrss;
   const { data, isError, isLoading } = useEnsName({
-    address: address,
+    address: addr,
     onError(error) {
       console.log("Error", error);
     },
